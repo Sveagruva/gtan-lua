@@ -66,19 +66,18 @@ function ParseLocation(location)
 			return { path = path, isLocal = true, server = {} }
 		end
 
-		for name, server in pairs(UserData.hosts) do
-			if name == serverName or server.hostname == serverName then
-				return { path = path, isLocal = false, server = server }
-			end
+		local server = UserData.hosts[serverName]
+		if server == nil then
+			error("server not found")
 		end
 
-		error("server not found")
+		return { path = path, isLocal = false, server = server }
 	end
 
 	local username = usernameParts[1]
 	local hostname = pathParts[1]
 
-	return { path = path, isLocal = false, server = { Hostname = hostname, Username = username } }
+	return { path = path, isLocal = false, server = { hostname = hostname, username = username } }
 end
 
 function LocationToRsyncStr(location)
