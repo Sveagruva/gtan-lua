@@ -1,5 +1,42 @@
 #!/usr/bin/env lua
 
+local function get_directory_from_path(filepath)
+	local last_separator = filepath:match("[\\/]([^\\/]+)$")
+
+	if last_separator then
+		return filepath:sub(1, -#last_separator - 2)
+	else
+		return "/"
+	end
+end
+
+local function is_symlink_unix(filepath)
+	local pipe = io.popen("ls -l " .. filepath)
+	if pipe then
+		local output = pipe:read("*a")
+		pipe:close()
+		if output and string.match(output, "^l") then
+			return true
+		end
+	end
+	return false
+end
+
+local current_file_path = debug.getinfo(1, "S").source:sub(2)
+local is_symlink = is_symlink_unix(current_file_path)
+
+if is_symlink then
+	local pipe = io.popen("readlink -f " .. current_file_path)
+	if pipe then
+		local target = pipe:read("*a"):gsub("\n$", "") -- Remove trailing newline
+		pipe:close()
+		current_file_path = target
+	end
+end
+
+current_file_path = get_directory_from_path(current_file_path)
+package.path = current_file_path .. "/?.lua;" .. package.path
+
 local Lummander = require("lummander")
 local cli = Lummander.new({
 	title = "Gtan",
